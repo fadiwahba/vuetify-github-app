@@ -11,7 +11,7 @@ const vuetify = new Vuetify({
         primary: colors.indigo.darken4,
         secondary: colors.teal.accent3,
         accent: colors.shades.black,
-        warn: colors.red.accent3,
+        warn: colors.red.accent2,
         error: colors.red.accent3
       },
       dark: {

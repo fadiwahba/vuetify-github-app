@@ -21,74 +21,78 @@
       </v-col>
     </v-row>
 
-    <!-- for debugging -->
-    <!-- <v-row>
-      <v-col class="red--text">
-        <pre>searchQuery: {{ searchQuery }}</pre>
-        <pre>defaultSortKey: {{ defaultSortKey }}</pre>
-        <pre>defaultOrder: {{ defaultOrder }}</pre>
-        <pre>totalResult: {{ totalResult }}</pre>
-      </v-col>
-    </v-row> -->
-
-    <h1 class="display-3 mb-4">Find a Github User</h1>
+    <h1 class="display-3 font-weight-thin primary--text mb-4">
+      Find a Github User
+    </h1>
     <v-row>
       <v-col cols="12">
-        <v-toolbar rounded dark color="accent" class="mb-1 p-2">
+        <v-toolbar
+          rounded
+          elevation="2"
+          color="grey lighten-4"
+          class="mb-1 p-2"
+        >
           <v-text-field
+            data-testid="search-field"
+            class="mr-4"
             placeholder="Github username, for example: Fady, or Tom"
-            flat
+            outlined
             dense
             hide-details
             clearable
             v-model="searchQuery"
-            color="secondary"
+            color="primary"
             clear-icon="mdi-close"
-            append-icon="mdi-account-search"
-            @click:append="searchGitHub"
-            v-on:keydown.13="searchGitHub"
+            append-icon="mdi-card-search"
+            @click:append="onSearch"
+            v-on:keydown.13="onSearch"
             :rules="validationRules"
           ></v-text-field>
-          <v-spacer></v-spacer>
           <v-select
+            data-testid="sort-field"
+            class="mr-4"
             v-model="defaultSortKey"
-            flat
+            outlined
             dense
+            color="primary"
+            item-color="primary"
             hide-details
             :items="sortByKeys"
             :disabled="!searchQuery || !searchQuery.length || noRecords"
             prepend-inner-icon="mdi-sort"
-            @change="searchGitHub"
+            @change="onSearch"
           >
           </v-select>
-          <v-spacer></v-spacer>
           <v-btn-toggle
+            data-testid="order-btn"
+            class="mr-4"
             v-model="defaultOrder"
-            @change="searchGitHub"
-            rounded
+            @change="onSearch"
             mandatory
+            color="primary"
           >
             <v-btn
               small
               depressed
-              color="accent lighten-1"
+              color="primary"
               :disabled="!searchQuery || !searchQuery.length || noRecords"
               :value="'asc'"
             >
-              <v-icon>mdi-arrow-up</v-icon>
+              <v-icon color="white" small>mdi-arrow-up</v-icon>
             </v-btn>
             <v-btn
               small
               depressed
-              color="accent lighten-1"
+              color="primary"
               :disabled="!searchQuery || !searchQuery.length || noRecords"
               :value="'desc'"
             >
-              <v-icon>mdi-arrow-down</v-icon>
+              <v-icon color="white" small>mdi-arrow-down</v-icon>
             </v-btn>
           </v-btn-toggle>
           <v-spacer></v-spacer>
           <v-btn
+            data-testid="reset-btn"
             small
             color="warn"
             v-on:click="reset"
@@ -103,7 +107,9 @@
     <template v-if="result && result.items">
       <v-row>
         <v-col>
-          <div class="text-left">About {{ totalResult }} results</div>
+          <div class="text-left">
+            About <span class="primary--text">{{ totalResult }}</span> results
+          </div>
         </v-col>
       </v-row>
       <v-row>
@@ -152,7 +158,7 @@
                   <template v-slot:activator="{ on, attrs }">
                     <v-btn
                       icon
-                      color="grey lighten-2"
+                      color="secondary"
                       v-bind="attrs"
                       v-on="on"
                       @click="onFollowMe"
@@ -169,41 +175,17 @@
           </v-hover>
         </v-col>
       </v-row>
-      <v-toolbar dense rounded outlined flat color="grey lighten-4">
-        <span class="mr-4 grey--text">
-          Page
-          <span class="primary--text">
-            {{ currentPage }}
-          </span>
-          of
-          <span class="primary--text">
-            {{ numberOfPages }}
-          </span>
-        </span>
-        <v-spacer></v-spacer>
-        <v-btn
-          fab
-          depressed
-          x-small
-          dark
-          color="primary"
-          class="mr-1"
-          @click="previousPage"
-        >
-          <v-icon>mdi-chevron-left</v-icon>
-        </v-btn>
-        <v-btn
-          fab
-          depressed
-          x-small
-          dark
-          color="primary"
-          class="ml-1"
-          @click="nextPage"
-        >
-          <v-icon>mdi-chevron-right</v-icon>
-        </v-btn>
-      </v-toolbar>
+      <v-row>
+        <v-col>
+          <v-pagination
+            v-model="currentPage"
+            class="my-4"
+            :total-visible="15"
+            :length="numberOfPages()"
+            @input="onPageChange"
+          ></v-pagination>
+        </v-col>
+      </v-row>
     </template>
   </v-container>
 </template>
@@ -221,35 +203,26 @@ export default {
       defaultSortKey: "joined",
       sortByKeys: ["joined", "followers", "repositories"],
       defaultOrder: "asc",
-      resultPerPage: "24",
       totalResult: null,
-      currentPage: "1",
+      resultPerPage: 24,
+      currentPage: 1,
+      disablePrevious: true,
+      disableNext: true,
       validationRules: [
         value => !!value || "Required.",
         value => (value || "").length <= 50 || "Max 50 characters"
       ]
     };
   },
-  computed: {
-    numberOfPages() {
-      if (this.resultPerPage && this.totalResult) {
-        return Math.ceil(this.totalResult / this.resultPerPage);
-      } else {
-        return 0;
-      }
-    }
-  },
   methods: {
-    searchGitHub: function() {
+    fetchData: function() {
       if (this.searchQuery && this.searchQuery.length) {
         this.loading = true;
         this.noRecords = false;
+        let url = `https://api.github.com/search/users?q=${this.searchQuery}&sort=${this.defaultSortKey}&order=${this.defaultOrder}&per_page=${this.resultPerPage}&page=${this.currentPage}`;
         axios
-          .get(
-            `https://api.github.com/search/users?q=${this.searchQuery}&sort=${this.defaultSortKey}&order=${this.defaultOrder}&per_page=${this.resultPerPage}&page=${this.currentPage}`
-          )
+          .get(url)
           .then(response => {
-            console.log("response: ", response);
             if (response.data && response.data.items.length) {
               this.result = response.data;
               this.totalResult = response.data.total_count;
@@ -259,12 +232,13 @@ export default {
                 "Sorry we could not find any records, Try another search!";
               this.snackbar = true;
               this.noRecords = true;
+              this.reset();
             }
             this.loading = false;
           })
           .catch(error => {
             this.loading = false;
-            console.log(error);
+            console.error(error);
             this.snackbarText = error.message;
             this.snackbar = true;
           });
@@ -278,23 +252,26 @@ export default {
       this.currentPage = 1;
     },
     onViewDetails(item) {
-      console.log("item: ", item);
-      // named route
       this.$router.push({ name: "users", params: { userName: item.login } });
     },
     onFollowMe() {
-      this.snackbarText = "This is just a placeholder of a 'follow me' action";
+      this.snackbarText =
+        "This is just a placeholder of a 'follow me' action ;)";
       this.snackbar = true;
     },
-    previousPage() {
-      if (this.currentPage > 1) {
-        this.currentPage--;
-        this.searchGitHub();
+    numberOfPages() {
+      if (this.resultPerPage && this.totalResult) {
+        return Math.ceil(this.totalResult / this.resultPerPage);
+      } else {
+        return 0;
       }
     },
-    nextPage() {
-      this.currentPage++;
-      this.searchGitHub();
+    onSearch() {
+      this.currentPage = 1;
+      this.fetchData(this.currentPage);
+    },
+    onPageChange() {
+      this.fetchData(this.currentPage);
     }
   }
 };

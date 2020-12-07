@@ -1,14 +1,14 @@
 <template>
   <v-container grid-list-xl v-if="user">
-    <v-card outlined max-width="900" class="mx-auto">
+    <v-card flat max-width="900" class="mx-auto">
       <v-card-text>
         <v-row>
-          <v-col>
-            <v-avatar v-if="user.avatar_url" size="400" class="mb-4">
+          <v-col cols="6">
+            <v-avatar v-if="user.avatar_url" size="400" class="mb-4" rounded>
               <img :src="user.avatar_url" />
             </v-avatar>
           </v-col>
-          <v-col>
+          <v-col cols="6">
             <h2 class="display-1 mb-4 primary--text">
               {{ user.name ? user.name : user.login }}
               <v-tooltip bottom>
@@ -100,6 +100,3 @@ export default {
   }
 };
 </script>
-<style lang="sass" scoped>
-//
-</style>

@@ -2,14 +2,14 @@
   <v-app>
     <v-app-bar app color="primary">
       <v-toolbar-title>
-        <v-img
-          :src="require('./assets/logo_white.png')"
-          alt="Github Logo"
-          class="shrink mr-2"
-          contain
-          transition="scale-transition"
-          width="100"
-        />
+        <router-link
+          to="/"
+          class="d-flex flex-row justify-center align-center"
+          title="Github API"
+        >
+          <v-icon color="white" large>mdi-github</v-icon>
+          <h1 class="secondary--text display-1 font-weight-light mx-2">API</h1>
+        </router-link>
       </v-toolbar-title>
 
       <v-spacer></v-spacer>
@@ -34,30 +34,13 @@
           <span>Find a Github Topic</span>
         </v-tooltip>
       </router-link>
-
-      <!-- <v-btn
-        color="secondary"
-        v-on:click="$router.push('/home')"
-        elevation="2"
-        class="mr-4"
-      >
-        Users
-      </v-btn>
-
-      <v-btn
-        color="secondary"
-        v-on:click="$router.push('/topics')"
-        elevation="2"
-      >
-        Topics
-      </v-btn> -->
     </v-app-bar>
 
     <v-main class="blue-grey lighten-5">
       <v-container>
         <v-row>
           <v-col>
-            <v-card elevation="4">
+            <v-card class="my-5" elevation="5">
               <v-card-text>
                 <router-view />
               </v-card-text>
@@ -66,15 +49,24 @@
         </v-row>
       </v-container>
     </v-main>
+    <footer-component></footer-component>
   </v-app>
 </template>
 
 <script>
+import FooterComponent from "./components/FooterComponent.vue";
 export default {
-  name: "App"
+  components: { FooterComponent },
+  name: "App",
+  data() {
+    return {
+      currentYear: new Date().getFullYear()
+    };
+  }
 };
 </script>
-<style lang="sass">
-.v-application a
-  text-decoration: none
+<style lang="scss">
+.v-application a {
+  text-decoration: none;
+}
 </style>
